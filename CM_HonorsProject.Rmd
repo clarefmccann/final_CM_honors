@@ -1,0 +1,524 @@
+---
+title: "Examing scholastic competence, mindfulness & school transition in adolescent girls" 
+author: "Clare McCann"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(
+	echo = TRUE,
+	message = TRUE,
+	warning = TRUE
+)
+```
+
+```{r Load Required Packages, message=FALSE, warning=FALSE, include=FALSE}
+## Load required packages ##
+packages <-  c("tidyverse", "lavaan",
+               "reshape2",
+               "nlme", "lme4",
+               "data.table", "psych",
+               "parallel","lubridate",
+               "mgcv", "ggpubr", "broom", "table1", "apaTables")
+if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
+  install.packages(setdiff(packages, rownames(installed.packages())))  
+}
+lapply(packages, library, character.only = TRUE)
+```
+
+Set root path for kate
+```{r}
+#kate's root path
+root_path="/Volumes/devbrainlab/Clare/honors_cm/"
+```
+
+Set root path for Clare
+```{r}
+root_path="~/Documents/Honors_Project/honors_cm/"
+```
+
+
+Load datasets
+```{r}
+
+CAMM_W1<-read.csv(paste0(root_path,"CAMM_Wave1.csv"),
+                  stringsAsFactors = FALSE) %>%
+  select(tagid, CAMM_W1)
+
+CAMM_W2<-read.csv(paste0(root_path,"CAMM_Wave2.csv"),
+                  stringsAsFactors = FALSE) %>% 
+  select(tagid, CAMM_W2)
+
+CAMM_W3<-read.csv(paste0(root_path,"CAMM_Wave3.csv"),
+                  stringsAsFactors = FALSE) %>% 
+  select(tagid, CAMM_W3)
+
+SPPA_W1<-read.csv(paste0(root_path,"SPPA_Wave1.csv"),
+                  stringsAsFactors = FALSE) %>% 
+  select(tagid, SC_W1)
+
+SPPA_W2<-read.csv(paste0(root_path,"SPPA_Wave2.csv"),
+                  stringsAsFactors = FALSE) %>% 
+  select(tagid, SC_W2)
+
+SPPA_W3<-read.csv(paste0(root_path,"SPPA_Wave3.csv"),
+                  stringsAsFactors = FALSE) %>% 
+  select(tagid, SC_W3)
+
+
+SES <- read.csv(paste0(root_path,"Wave 1 SES.csv"),
+                stringsAsFactors = FALSE) %>% 
+  select(tagid, W1_Income) #Long 
+
+Age <- read.csv(paste0(root_path,"Age.csv"),
+                stringsAsFactors = FALSE) %>% 
+  select(tagid, wave, age) %>% 
+  mutate(wave=paste0("W",wave))
+
+#Age <-na.omit(Age)
+
+Menarche <- read.csv(
+  paste0(root_path,"Age_at_menarche_short_finalizing copy.csv"),
+  stringsAsFactors = FALSE) %>% 
+  select(tagid, aam_final) #Long
+
+School_Transitions <- read.csv(paste0(root_path,"Grade Transitions CM Honors.csv"),
+                               stringsAsFactors = FALSE) %>% 
+  select(tagid, Transitioned_W1, Transitioned_W2, Transitioned_W3)
+
+#School_Transitions <-na.omit(School_Transitions)
+
+
+#Removing underscores from id
+
+School_Transitions <-School_Transitions %>%
+  mutate(no_underscores=paste0("TAG",
+                               substring(tagid,first=5,last=length(tagid))))
+
+#Reorganizing columns 
+
+School_Transitions <- School_Transitions[,-1]
+School_Transitions <- School_Transitions[c(4,1,2,3)]
+
+colnames(School_Transitions)[1] <- "tagid"
+  
+
+#coding for transitions 
+
+# 0 = transitioned to middle school 
+# 1 = transitioned to high school 
+# 2 = no transition prior to wave 
+
+
+```
+
+Make long datasets
+```{r}
+#Creating Long Data Set for MLM 
+CAMM_long<-full_join(CAMM_W1,full_join(CAMM_W2,CAMM_W3)) %>%
+  gather(Wave_CAMM, CAMM, CAMM_W1:CAMM_W3) %>%
+  mutate(wave = substr(Wave_CAMM, 7, 7)) %>%
+  select(-Wave_CAMM)
+
+SC_long<-full_join(SPPA_W1,full_join(SPPA_W2,SPPA_W3)) %>%
+  gather(Wave_SC, SC, SC_W1:SC_W3) %>%
+  mutate(wave = substr(Wave_SC, 5, 5)) %>%
+  select(-Wave_SC)
+
+long_HonorsData <- full_join(CAMM_long, SC_long)
+
+SchoolTransitions_long<-School_Transitions %>% gather(Wave_Transitioned, Transition, Transitioned_W1:Transitioned_W3) %>%
+  mutate(wave = substr(Wave_Transitioned, 15, 15)) %>%
+  select(-Wave_Transitioned)
+
+
+long_HonorsData<-full_join(SchoolTransitions_long,long_HonorsData,by=c("tagid", "wave")) %>%
+  distinct(.)
+
+Age <- Age %>% mutate(wave = substr(wave, 2, 2))
+
+long_HonorsData <- full_join(long_HonorsData, Age, by=c("tagid", "wave")) %>%
+  distinct(.)
+
+long_HonorsData <- full_join(long_HonorsData, SES, by=c("tagid")) %>%
+  distinct(.)
+
+long_HonorsData <- full_join(long_HonorsData, Menarche, by=c("tagid")) %>%
+  distinct(.)
+
+# remove rows without School Transitions data
+long_HonorsData <- long_HonorsData[is.na(long_HonorsData$Transition) == FALSE, ]
+
+# identify participants with duplicate data
+#long_HonorsData$tagid_wave <- paste(long_HonorsData$tagid, long_HonorsData$wave, sep="_") # create a new variable that combines subject ID and wave information
+#long_HonorsData[duplicated(long_HonorsData$tagid_wave), ] # see duplicated data
+
+# note that duplicated data exists for TAG166 at wave 2. Take the average of all CAMM and SC values
+filter(long_HonorsData, tagid == "TAG166" & wave == 2) %>% 
+  summarise(mean_CAMM_TAG166 = mean(CAMM),
+            mean_SC = mean(SC)) 
+
+# note that mean CAMM = 24.5, mean_SC = 16
+# manually replaced all TAG 166, W2 CAMM and SC values with the average across repeated assessments
+
+long_HonorsData[which(long_HonorsData$tagid == "TAG166" & long_HonorsData$wave == 2), ]$CAMM = 24.5
+long_HonorsData[which(long_HonorsData$tagid == "TAG166" & long_HonorsData$wave == 2), ]$SC = 16
+
+# now that we've made all the values the same, there should be duplicated rows. remove those duplicated rows
+long_HonorsData <- distinct(long_HonorsData)
+
+rm(Age,CAMM_long,CAMM_W1,CAMM_W2,CAMM_W3,Menarche,SC_long,School_Transitions,SchoolTransitions_long, SPPA_W1,SPPA_W2,SPPA_W3,SES)
+
+# Make time-lagged variables
+LagWave1<-long_HonorsData%>%
+  filter(wave==1) %>%
+  mutate(CAMM_lag=CAMM,
+         SC_lag=SC,
+         wave=as.factor(2)) %>%
+  select(tagid,wave,SC_lag,CAMM_lag)
+
+
+long_HonorsData<-left_join(long_HonorsData,LagWave1,by=c("tagid","wave"))
+
+LagWave2<-long_HonorsData%>%
+  filter(wave==2) %>%
+  mutate(CAMM_lag=CAMM,
+         SC_lag=SC,
+         wave=as.factor(3)) %>%
+  select(tagid,wave,SC_lag,CAMM_lag)
+
+long_HonorsData<-left_join(long_HonorsData,LagWave2,by=c("tagid","wave")) 
+
+long_HonorsData<-long_HonorsData%>%
+  mutate(SC_lag=ifelse(wave==2,SC_lag.x,
+                       ifelse(wave==3,SC_lag.y,
+                              NA)),
+         CAMM_lag=ifelse(wave==2,CAMM_lag.x,
+                       ifelse(wave==3,CAMM_lag.y,
+                              NA)))
+
+long_HonorsData<-long_HonorsData %>%
+  select(-SC_lag.x,-SC_lag.y,-CAMM_lag.x,-CAMM_lag.y)
+
+
+```
+
+```{r}
+
+long_HonorsData <- long_HonorsData[c(1,3,2,4,5,6,7,8,9,10)]
+
+colnames(long_HonorsData)[7] <- "SES"
+colnames(long_HonorsData)[8] <- "Age_at_Menarche"
+colnames(long_HonorsData)[6]<- "Age_at_Wave"
+
+long_HonorsData$SES<-ordered(as.factor(long_HonorsData$SES))
+long_HonorsData$Transition <- as.factor(long_HonorsData$Transition)
+long_HonorsData$tagid <- as.factor(long_HonorsData$tagid)
+long_HonorsData$wave <- as.factor(long_HonorsData$wave)
+str(long_HonorsData)
+levels(long_HonorsData$SES)
+
+```
+
+Descriptives
+```{r}
+
+library("ggpubr")
+
+ggboxplot(long_HonorsData, x = "wave", y = "Age_at_Wave",
+          color = "wave",
+          palette = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggboxplot(long_HonorsData, x = "wave", y = "CAMM",
+          color = "wave",
+          palette = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggboxplot(long_HonorsData, x = "wave", y = "SC",
+          color = "wave",
+          palette = c("#00AFBB", "#E7B800", "#FC4E07"))
+               
+```
+
+Analysis
+```{r}
+long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
+long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
+
+#Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
+
+#gamm_model_SC_age=gamm(SC~s(Age_at_Wave, bs = "cs", k = 4), data=long_HonorsData, random=list(tagid=~1))
+#summary.gam(gamm_model_SC_age)
+
+null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+
+lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+summary(lin_model_SC_age_cov)
+
+quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+agecenter.sq,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                             filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+summary(quad_model_SC_age_cov)
+
+anova(null_model_SC_age_cov,quad_model_SC_age_cov)
+
+age_by_SC<-ggplot(data=long_HonorsData,
+       aes(x=Age_at_Wave,
+           y=SC))+
+  xlim(9.5,16.5)+
+  xlab("Age (years)")+
+  ylim(5,20)+
+  ylab("Scholastic Competence")+
+  geom_line(aes(group=tagid),size=.3,alpha=0.3,colour="deeppink")+
+  geom_point(aes(group=tagid),size=2,alpha=0.3,colour="deeppink")+
+  theme(axis.title = element_text(face = "bold")) 
+  theme_minimal()
+  
+age_by_SC
+  
+
+#without covariates
+
+null_model_SC_age<-lme(SC ~ 1,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter)))
+
+lin_model_SC_age<-lme(SC ~ agecenter,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter)))
+
+
+quad_model_SC_age<-lme(SC ~ agecenter+agecenter.sq,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                             filter(!is.na(SC),
+                                     !is.na(agecenter)))
+
+
+
+
+                                     
+
+#Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence? 
+
+
+CAMMlag_by_SC<-ggplot(data=long_HonorsData,
+       aes(x=CAMM_lag,
+           y=SC))+
+  xlim(0,40)+
+  xlab("CAMM (prior timepoint)")+
+  ylim(5,20)+
+  ylab("Scholastic Competence")+
+  geom_line(aes(group=tagid),size=.3,alpha=0.3)+
+  geom_point(aes(group=tagid,colour=wave),size=2,alpha=0.3)+
+  theme(axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")) 
+  theme_minimal()
+
+
+
+
+null_model_SC_CAMM<-lme(SC ~ 1,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(CAMM_lag)))
+
+lin_model_SC_CAMM<-lme(SC ~ CAMM_lag,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(CAMM_lag)))
+
+
+summary(lin_model_SC_CAMM)
+anova(null_model_SC_CAMM,lin_model_SC_CAMM)
+
+
+## Add covariates
+
+null_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche,
+                        method="ML",
+                        random = ~1|tagid,
+                        data=long_HonorsData %>% 
+                          filter(!is.na(SC),
+                                 !is.na(SES),
+                                 !is.na(CAMM_lag),
+                                 !is.na(Age_at_Menarche)))
+
+lin_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche+CAMM_lag,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(CAMM_lag),
+                                !is.na(Age_at_Menarche)))
+
+summary(lin_model_SC_CAMM)
+anova(null_model_SC_CAMM,lin_model_SC_CAMM)
+
+#Q3: Are levels of scholastic competence predicted by transitioning into middle school or high school?
+
+# Transition recoded 0=TranMiddle; 2=NoTran; 1=TranHigh
+
+#long_HonorsData<-long_HonorsData %>%
+  #mutate(Transition=ifelse(Transition==0,"TranMiddle",
+                           #ifelse(Transition==2,"NoTran",
+                                  #ifelse(Transition==1,"TranHigh",
+                           #Transition)))) %>%
+  #mutate(Transition=as.factor(Transition))
+#levels(long_HonorsData$Transition)
+
+null_model_SC_Transition<-lme(SC ~ 1,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(Transition)))
+
+lin_model_SC_Transition<-lme(SC ~ Transition,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(Transition)))
+
+
+summary(lin_model_SC_Transition)
+anova(null_model_SC_Transition,lin_model_SC_Transition)
+
+
+Transition_by_SC<-ggplot(data=long_HonorsData,
+       aes(x=Age_at_Wave,
+           y=SC))+
+  xlim(9.5,16.5)+
+  xlab("Age (years)")+
+  ylim(5,20)+
+  ylab("Scholastic Competence")+
+  geom_line(aes(group=tagid,colour=Transition),size=.3,alpha=0.3)+
+  geom_point(aes(group=tagid,colour=Transition),size=2,alpha=0.3)+
+  scale_color_manual(name="Transition",
+                                      labels= c("Middle School",
+                                                "High School",
+                                                "No Transition"),
+                                      values = c("0"="red",
+                                                 "1"= "green",
+                                                 "2"= "blue"))+
+  theme(legend.position="bottom", legend.box = "horizontal", axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold"))
+
+Transition_by_SC + theme_minimal()
+
+  
+ggsave("Transitions_SC.png")
+
+
+
+
+## Add covariates
+
+null_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche,
+                        method="ML",
+                        random = ~1|tagid,
+                        data=long_HonorsData %>% 
+                          filter(!is.na(SC),
+                                 !is.na(SES),
+                                 !is.na(Transition),
+                                 !is.na(Age_at_Menarche)))
+
+lin_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche+Transition,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(Transition),
+                                !is.na(Age_at_Menarche)))
+
+summary(lin_model_SC_Transition)
+anova(null_model_SC_Transition,lin_model_SC_Transition)
+
+```
+
+
+Creating Tables 
+```{r}
+
+library(dplyr)
+
+descriptives_CAMM <- long_HonorsData %>% group_by(wave) %>%
+  summarize(
+    Mean = mean(CAMM, na.rm= TRUE)
+    , Median = median(CAMM, na.rm = TRUE)
+    , SD = sd(CAMM, na.rm = TRUE)
+    , Min = min(CAMM, na.rm = TRUE)
+    , Max = max(CAMM, na.rm = TRUE)
+  )
+
+descriptives_SC <- long_HonorsData %>% group_by(wave) %>%
+  summarize(
+    Mean = mean(SC, na.rm= TRUE)
+    , Median = median(SC, na.rm = TRUE)
+    , SD = sd(SC, na.rm = TRUE)
+    , Min = min(SC, na.rm = TRUE)
+    , Max = max(SC, na.rm = TRUE)
+  )
+
+descriptives_age <- long_HonorsData %>% group_by(wave) %>%
+  summarize(
+    Mean = mean(Age_at_Wave, na.rm= TRUE)
+    , Median = median(Age_at_Wave, na.rm = TRUE)
+    , SD = sd(Age_at_Wave, na.rm = TRUE)
+    , Min = min(Age_at_Wave, na.rm = TRUE)
+    , Max = max(Age_at_Wave, na.rm = TRUE)
+  )
+
+long_HonorsData$wave <- 
+  factor(long_HonorsData$wave, 
+         levels= c(1, 2, 3),
+         labels = c("Wave 1", 
+                    "Wave 2", 
+                    "Wave 3"))
+
+long_HonorsData$Transition <- 
+  factor(long_HonorsData$Transition, levels=c(0, 1, 2),
+         labels=c("Transitoned to Middle School",
+                  "Transitioned to High School",
+                  "No Transition"))
+
+label(long_HonorsData$Age_at_Wave) <- "Age"
+label(long_HonorsData$CAMM) <- "Child and Adolescent Mindfulnes Measure scores"
+label(long_HonorsData$SC) <- "Self-Perceived Scholastic Competence"
+
+units(long_HonorsData$Age_at_Wave) <- "years"
+
+table1(~ Transition + Age_at_Wave + CAMM + SC | wave, data=long_HonorsData, overall = "Total", topclass = "Rtable1-grid Rtable1-shade Rtable1-times")
+
+```
+
