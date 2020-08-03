@@ -201,6 +201,8 @@ long_HonorsData<-long_HonorsData %>%
   select(-SC_lag.x,-SC_lag.y,-CAMM_lag.x,-CAMM_lag.y)
 
 
+
+
 ```
 
 ```{r}
@@ -349,12 +351,14 @@ null_model_SC_CAMM<-lme(SC ~ 1,
                               filter(!is.na(SC),
                                      !is.na(CAMM_lag)))
 
-lin_model_SC_CAMM<-lme(SC ~ CAMM_lag,
+lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
+                                     !is.na(SC_lag),
                                      !is.na(CAMM_lag)))
+
 
 
 summary(lin_model_SC_CAMM)
@@ -372,12 +376,13 @@ null_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(CAMM_lag),
                                  !is.na(Age_at_Menarche)))
 
-lin_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche+CAMM_lag,
+lin_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
                          filter(!is.na(SC),
                                 !is.na(SES),
+                                !is.na(SC_lag),
                                 !is.na(CAMM_lag),
                                 !is.na(Age_at_Menarche)))
 
@@ -388,13 +393,13 @@ anova(null_model_SC_CAMM,lin_model_SC_CAMM)
 
 # Transition recoded 0=TranMiddle; 2=NoTran; 1=TranHigh
 
-#long_HonorsData<-long_HonorsData %>%
-  #mutate(Transition=ifelse(Transition==0,"TranMiddle",
-                           #ifelse(Transition==2,"NoTran",
-                                  #ifelse(Transition==1,"TranHigh",
-                           #Transition)))) %>%
-  #mutate(Transition=as.factor(Transition))
-#levels(long_HonorsData$Transition)
+long_HonorsData<-long_HonorsData %>%
+  mutate(Transition=ifelse(Transition==0,"TranMiddle",
+                           ifelse(Transition==2,"NoTran",
+                                  ifelse(Transition==1,"TranHigh",
+                           Transition)))) %>%
+  mutate(Transition=as.factor(Transition))
+levels(long_HonorsData$Transition)
 
 null_model_SC_Transition<-lme(SC ~ 1,
                       method="ML",
@@ -403,11 +408,12 @@ null_model_SC_Transition<-lme(SC ~ 1,
                               filter(!is.na(SC),
                                      !is.na(Transition)))
 
-lin_model_SC_Transition<-lme(SC ~ Transition,
+lin_model_SC_Transition<-lme(SC ~ SC_lag + Transition,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
+                                     !is.na(SC_lag),
                                      !is.na(Transition)))
 
 
@@ -452,12 +458,13 @@ null_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(Transition),
                                  !is.na(Age_at_Menarche)))
 
-lin_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche+Transition,
+lin_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
                          filter(!is.na(SC),
                                 !is.na(SES),
+                                !is.na(SC_lag),
                                 !is.na(Transition),
                                 !is.na(Age_at_Menarche)))
 
