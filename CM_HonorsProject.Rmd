@@ -1,6 +1,6 @@
 ---
 title: "Examing scholastic competence, mindfulness & school transition in adolescent girls" 
-author: "Clare McCann"
+author: "Clare McCann & Kate Mills"
 output: html_document
 ---
 
@@ -20,9 +20,6 @@ packages <-  c("tidyverse", "lavaan",
                "data.table", "psych",
                "parallel","lubridate",
                "mgcv", "ggpubr", "broom", "table1", "apaTables")
-if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
-  install.packages(setdiff(packages, rownames(installed.packages())))  
-}
 lapply(packages, library, character.only = TRUE)
 ```
 
@@ -342,15 +339,19 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
   theme_minimal()
 
 
-
-
-null_model_SC_CAMM<-lme(SC ~ 1,
+# First thing is to report comparing null model to one including prior CAMM as predictor
+# with prior SC as covariate
+  
+# Null model filtering NAs in lags and contemporaneous measures of SC and CAMM
+null_model_SC<-lme(SC ~ 1,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
-                                     !is.na(CAMM_lag)))
+                                     !is.na(CAMM_lag),
+                                     !is.na(SC_lag)))
 
+# Linear model of prior CAMM predicting SC after controlling for prior SC
 lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
                       method="ML",
                       random = ~1|tagid,
@@ -359,15 +360,15 @@ lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
                                      !is.na(SC_lag),
                                      !is.na(CAMM_lag)))
 
-
-
+# Comapre null to linear model w/ predictors and the linear model is better
+anova(null_model_SC,lin_model_SC_CAMM)
+# But when looking at the summary, it's clear that it's better only because prior levels of
+# SC are predictive of subsequent SC and prior levels of CAMM don't explain a significant
+# portion of additional variance
 summary(lin_model_SC_CAMM)
-anova(null_model_SC_CAMM,lin_model_SC_CAMM)
 
-
-## Add covariates
-
-null_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche,
+# Now, examine with all the preregistered covariates included
+null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche,
                         method="ML",
                         random = ~1|tagid,
                         data=long_HonorsData %>% 
@@ -376,7 +377,17 @@ null_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(CAMM_lag),
                                  !is.na(Age_at_Menarche)))
 
-lin_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
+lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(CAMM_lag),
+                                !is.na(Age_at_Menarche)))
+
+lin_model_SC_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
@@ -387,7 +398,60 @@ lin_model_SC_CAMM<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
                                 !is.na(Age_at_Menarche)))
 
 summary(lin_model_SC_CAMM)
-anova(null_model_SC_CAMM,lin_model_SC_CAMM)
+anova(null_model_SC_CAMM_covariates,lin_model_SC_covariates,lin_model_SC_CAMM_covariates)
+anova(lin_model_SC_CAMM_covariates)
+############################################
+
+
+# #### Subsequent exploratory examination to see what maybe driving the lack of relationship between
+# # prior CAMM and SC when SC_lag is added but only in the non-covariate model
+# 
+# # Null model filtering NAs in contemporaneous measures of SC and CAMM
+# null_model_contempSC<-lme(SC ~ 1,
+#                       method="ML",
+#                       random = ~1|tagid,
+#                       data=long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(CAMM)))
+# #Linear model of prior CAMM predicting SC
+# lin_model_CAMM<-lme(SC ~ CAMM_lag,
+#                       method="ML",
+#                       random = ~1|tagid,
+#                       data=long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(SC_lag),
+#                                      !is.na(CAMM_lag)))
+# # Linear model of prior SC predicting SC
+# lin_model_baselinSC<-lme(SC ~ SC_lag,
+#                       method="ML",
+#                       random = ~1|tagid,
+#                       data=long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(SC_lag),
+#                                      !is.na(CAMM_lag)))
+# # Linear model of CAMM predicting SC (contemporaneous measurements)
+# lin_model_contempSC_CAMM<-lme(SC ~ CAMM,
+#                       method="ML",
+#                       random = ~1|tagid,
+#                       data=long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(CAMM),
+#                                      !is.na(SC_lag)))
+# 
+# lin_model_SC_CAMM_controlled<-lme(SC ~ SC_lag + CAMM_lag + CAMM,
+#                       method="ML",
+#                       random = ~1|tagid,
+#                       data=long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(CAMM),
+#                                      !is.na(CAMM_lag),
+#                                      !is.na(SC_lag)))
+# 
+# 
+# # Compare basic null to contemporaneous measurements model
+# anova(null_model_SC,lin_model_contempSC_CAMM,lin_model_SC_CAMM_controlled)
+# summary(lin_model_SC_CAMM_controlled)
+
 
 #Q3: Are levels of scholastic competence predicted by transitioning into middle school or high school?
 
