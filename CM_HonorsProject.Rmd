@@ -470,6 +470,7 @@ null_model_SC_Transition<-lme(SC ~ 1,
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
+                                     !is.na(SC_lag),
                                      !is.na(Transition)))
 
 lin_model_SC_Transition<-lme(SC ~ SC_lag + Transition,
@@ -513,16 +514,17 @@ ggsave("Transitions_SC.png")
 
 ## Add covariates
 
-null_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche,
+null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche,
                         method="ML",
                         random = ~1|tagid,
                         data=long_HonorsData %>% 
                           filter(!is.na(SC),
                                  !is.na(SES),
+                                 !is.na(SC_lag),
                                  !is.na(Transition),
                                  !is.na(Age_at_Menarche)))
 
-lin_model_SC_Transition<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
+lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
