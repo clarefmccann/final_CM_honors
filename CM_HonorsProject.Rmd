@@ -19,7 +19,7 @@ packages <-  c("tidyverse", "lavaan",
                "nlme", "lme4",
                "data.table", "psych",
                "parallel","lubridate",
-               "mgcv", "ggpubr", "broom", "table1", "apaTables")
+               "mgcv", "ggpubr", "broom", "table1", "ggeffects")
 lapply(packages, library, character.only = TRUE)
 ```
 
@@ -167,6 +167,7 @@ long_HonorsData <- distinct(long_HonorsData)
 rm(Age,CAMM_long,CAMM_W1,CAMM_W2,CAMM_W3,Menarche,SC_long,School_Transitions,SchoolTransitions_long, SPPA_W1,SPPA_W2,SPPA_W3,SES)
 
 # Make time-lagged variables
+
 LagWave1<-long_HonorsData%>%
   filter(wave==1) %>%
   mutate(CAMM_lag=CAMM,
@@ -240,6 +241,7 @@ ggboxplot(long_HonorsData, x = "wave", y = "SC",
 
 Analysis
 ```{r}
+
 long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
 long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
 
@@ -286,13 +288,14 @@ age_by_SC<-ggplot(data=long_HonorsData,
   xlab("Age (years)")+
   ylim(5,20)+
   ylab("Scholastic Competence")+
-  geom_line(aes(group=tagid),size=.3,alpha=0.3,colour="deeppink")+
-  geom_point(aes(group=tagid),size=2,alpha=0.3,colour="deeppink")+
+  geom_line(aes(group=tagid),size=.5,alpha=0.3,colour="#82204A")+
+  geom_point(aes(group=tagid),size=3,alpha=0.3,colour="#82204A")+
   theme(axis.title = element_text(face = "bold")) 
   theme_minimal()
   
 age_by_SC
-  
+
+ggsave("Age_by_SC.png")
 
 #without covariates
 
@@ -320,10 +323,7 @@ quad_model_SC_age<-lme(SC ~ agecenter+agecenter.sq,
 
 
 
-
-                                     
-
-#Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence? 
+#Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence?
 
 
 CAMMlag_by_SC<-ggplot(data=long_HonorsData,
@@ -335,8 +335,14 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
   ylab("Scholastic Competence")+
   geom_line(aes(group=tagid),size=.3,alpha=0.3)+
   geom_point(aes(group=tagid,colour=wave),size=2,alpha=0.3)+
-  theme(axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")) 
+  geom_smooth(method='lm', formula= y~x)+
+  theme(axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")) +
+  scale_colour_manual(name = "wave",labels=c("1","2","3"), values= c("#00AFBB", "#E7B800", "#FC4E07"))
   theme_minimal()
+
+ggsave("CAMM_by_SC.png",
+      plot=CAMMlag_by_SC,
+      width=6, height=4, units= 'in', dpi=300)
 
 
 # First thing is to report comparing null model to one including prior CAMM as predictor
@@ -413,7 +419,15 @@ anova(lin_model_SC_CAMM_covariates)
 #                       data=long_HonorsData %>%
 #                               filter(!is.na(SC),
 #                                      !is.na(CAMM)))
-# #Linear model of prior CAMM predicting SC
+## Linear model of prior CAMM predicting SC
+
+# null_model_camm <- lme(SC ~ 1,
+#                       method ="ML",
+#                       random = ~1|tagid,
+#                       data = long_HonorsData %>%
+#                               filter(!is.na(SC),
+#                                      !is.na(SC_lag),
+#                                      !is.na(CAMM_lag)))
 # lin_model_CAMM<-lme(SC ~ CAMM_lag,
 #                       method="ML",
 #                       random = ~1|tagid,
@@ -426,9 +440,9 @@ anova(lin_model_SC_CAMM_covariates)
 #                       method="ML",
 #                       random = ~1|tagid,
 #                       data=long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(SC_lag),
-#                                      !is.na(CAMM_lag)))
+#                                filter(!is.na(SC),
+#                                       !is.na(SC_lag),
+#                                       !is.na(CAMM_lag)))
 # # Linear model of CAMM predicting SC (contemporaneous measurements)
 # lin_model_contempSC_CAMM<-lme(SC ~ CAMM,
 #                       method="ML",
@@ -499,17 +513,15 @@ Transition_by_SC<-ggplot(data=long_HonorsData,
                                       labels= c("Middle School",
                                                 "High School",
                                                 "No Transition"),
-                                      values = c("0"="red",
-                                                 "1"= "green",
+                                      values = c("0"="orange",
+                                                 "1"= "purple",
                                                  "2"= "blue"))+
   theme(legend.position="bottom", legend.box = "horizontal", axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold"))
 
 Transition_by_SC + theme_minimal()
 
   
-ggsave("Transitions_SC.png")
-
-
+ggsave("Transitions_by_SC.png")
 
 
 ## Add covariates
@@ -534,13 +546,35 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                                 !is.na(Transition),
                                 !is.na(Age_at_Menarche)))
 
-summary(lin_model_SC_Transition)
-anova(null_model_SC_Transition,lin_model_SC_Transition)
+ggpredict(lin_SC_Transition_covariates, terms = c("Transition"))
+
+
+theme_set(theme_sjplot())
+
+lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(Transition),
+                                !is.na(Age_at_Menarche)))
+
+resid_transition <- lm(Transition ~ SES + Age_at_Menarche + SC_lag,
+                       data = long_HonorsData %>%
+                         filter(!is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(Transition),
+                                !is.na(Age_at_Menarche)))
+
+summary(lin_SC_Transition_covariates)
+anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
 
 ```
 
 
-Creating Tables 
+Creating Descriptive Tables 
 ```{r}
 
 library(dplyr)
