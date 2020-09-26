@@ -166,6 +166,13 @@ long_HonorsData <- distinct(long_HonorsData)
 
 rm(Age,CAMM_long,CAMM_W1,CAMM_W2,CAMM_W3,Menarche,SC_long,School_Transitions,SchoolTransitions_long, SPPA_W1,SPPA_W2,SPPA_W3,SES)
 
+## mice stuff
+
+new <- mice(long_HonorsData, m=5, maxit = 50, method = 'pmm', seed = 500)
+
+long_HonorsData <- complete(new,3)
+
+
 # Make time-lagged variables
 
 LagWave1<-long_HonorsData%>%
@@ -201,6 +208,9 @@ long_HonorsData<-long_HonorsData %>%
 
 
 
+
+
+
 ```
 
 ```{r}
@@ -213,8 +223,7 @@ colnames(long_HonorsData)[6]<- "Age_at_Wave"
 
 long_HonorsData$SES <- as.numeric(long_HonorsData$SES)
 
-long_HonorsData %>% 
-    mutate(SES = na_if(SES, 7))
+long_HonorsData <- long_HonorsData %>% mutate(SES = na_if(SES, 7))
 
 long_HonorsData$SES<-ordered(as.factor(long_HonorsData$SES))
 long_HonorsData$Transition <- as.factor(long_HonorsData$Transition)
@@ -364,7 +373,6 @@ null_model_SC<-lme(SC ~ 1,
 
 # Linear model of prior CAMM predicting SC after controlling for prior SC
 lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
-                      method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
@@ -398,7 +406,7 @@ lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
                                 !is.na(CAMM_lag),
                                 !is.na(Age_at_Menarche)))
 
-lin_model_SC_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag,
+lin_model_SC_covariates<-(lme(SC ~ SES+Age_at_Menarche+SC_lag,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
@@ -406,7 +414,7 @@ lin_model_SC_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag,
                                 !is.na(SES),
                                 !is.na(SC_lag),
                                 !is.na(CAMM_lag),
-                                !is.na(Age_at_Menarche)))
+                                !is.na(Age_at_Menarche))))
 
 summary(lin_model_SC_CAMM)
 anova(null_model_SC_CAMM_covariates,lin_model_SC_covariates,lin_model_SC_CAMM_covariates)
@@ -544,7 +552,6 @@ null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(Age_at_Menarche)))
 
 lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
-                       method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
                          filter(!is.na(SC),
