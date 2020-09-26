@@ -1,5 +1,5 @@
 ---
-title: "Examing scholastic competence, mindfulness & school transition in adolescent girls" 
+title: "Examining scholastic competence, mindfulness & school transition in adolescent girls" 
 author: "Clare McCann & Kate Mills"
 output: html_document
 ---
@@ -211,12 +211,17 @@ colnames(long_HonorsData)[7] <- "SES"
 colnames(long_HonorsData)[8] <- "Age_at_Menarche"
 colnames(long_HonorsData)[6]<- "Age_at_Wave"
 
+long_HonorsData$SES <- as.numeric(long_HonorsData$SES)
+
+long_HonorsData %>% 
+    mutate(SES = na_if(SES, 7))
+
 long_HonorsData$SES<-ordered(as.factor(long_HonorsData$SES))
 long_HonorsData$Transition <- as.factor(long_HonorsData$Transition)
 long_HonorsData$tagid <- as.factor(long_HonorsData$tagid)
 long_HonorsData$wave <- as.factor(long_HonorsData$wave)
 str(long_HonorsData)
-levels(long_HonorsData$SES)
+
 
 ```
 
@@ -484,16 +489,18 @@ null_model_SC_Transition<-lme(SC ~ 1,
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
-                                     !is.na(SC_lag),
-                                     !is.na(Transition)))
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(Transition),
+                                !is.na(Age_at_Menarche)))
 
 lin_model_SC_Transition<-lme(SC ~ SC_lag + Transition,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
-                                     !is.na(SC_lag),
-                                     !is.na(Transition)))
+                                !is.na(SC_lag),
+                                !is.na(Transition)))
 
 
 summary(lin_model_SC_Transition)
@@ -546,27 +553,7 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                                 !is.na(Transition),
                                 !is.na(Age_at_Menarche)))
 
-ggpredict(lin_SC_Transition_covariates, terms = c("Transition"))
 
-
-theme_set(theme_sjplot())
-
-lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
-                       method="ML",
-                       random = ~1|tagid,
-                       data=long_HonorsData %>% 
-                         filter(!is.na(SC),
-                                !is.na(SES),
-                                !is.na(SC_lag),
-                                !is.na(Transition),
-                                !is.na(Age_at_Menarche)))
-
-resid_transition <- lm(Transition ~ SES + Age_at_Menarche + SC_lag,
-                       data = long_HonorsData %>%
-                         filter(!is.na(SES),
-                                !is.na(SC_lag),
-                                !is.na(Transition),
-                                !is.na(Age_at_Menarche)))
 
 summary(lin_SC_Transition_covariates)
 anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
