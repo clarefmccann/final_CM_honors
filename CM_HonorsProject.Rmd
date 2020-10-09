@@ -40,27 +40,51 @@ Load datasets
 
 CAMM_W1<-read.csv(paste0(root_path,"CAMM_Wave1.csv"),
                   stringsAsFactors = FALSE) %>%
-  select(tagid, CAMM_W1)
+              select(tagid, CAMM_W1)
+
+#CAMM_W1 <- CAMM_W1[,c(3:12)]
+
+#CAMM_cron_1 <-  alpha(CAMM_W1, na.rm = TRUE, check.keys = TRUE)
 
 CAMM_W2<-read.csv(paste0(root_path,"CAMM_Wave2.csv"),
-                  stringsAsFactors = FALSE) %>% 
-  select(tagid, CAMM_W2)
+                  stringsAsFactors = FALSE) %>%
+              select(tagid, CAMM_W2)
+
+#CAMM_W2 <- CAMM_W2[,c(3:12)]
+
+#CAMM_cron_2 <-  alpha(CAMM_W2, na.rm = TRUE, check.keys = TRUE)
 
 CAMM_W3<-read.csv(paste0(root_path,"CAMM_Wave3.csv"),
-                  stringsAsFactors = FALSE) %>% 
-  select(tagid, CAMM_W3)
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, CAMM_W3)
+
+#CAMM_W3 <- CAMM_W3[,c(3:12)]
+
+#CAMM_cron_3 <-  alpha(CAMM_W3, na.rm = TRUE, check.keys = TRUE)
 
 SPPA_W1<-read.csv(paste0(root_path,"SPPA_Wave1.csv"),
-                  stringsAsFactors = FALSE) %>% 
-  select(tagid, SC_W1)
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, SC_W1)
+
+##SC_W1 <- SPPA_W1[,c(86, 94, 102, 110, 118)]
+
+##SC_cron_W1 <- alpha(SC_W1, na.rm = TRUE, check.keys = TRUE)
 
 SPPA_W2<-read.csv(paste0(root_path,"SPPA_Wave2.csv"),
-                  stringsAsFactors = FALSE) %>% 
-  select(tagid, SC_W2)
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, SC_W2)
+
+#SC_W2 <- SPPA_W2[,c(86, 94, 102, 110, 118)]
+
+#SC_cron_W2 <- alpha(SC_W2, na.rm = TRUE, check.keys = TRUE)
 
 SPPA_W3<-read.csv(paste0(root_path,"SPPA_Wave3.csv"),
-                  stringsAsFactors = FALSE) %>% 
-  select(tagid, SC_W3)
+                  stringsAsFactors = FALSE) %>%
+              select(tagid, SC_W3)
+
+##SC_W3 <- SPPA_W3[,c(86, 94, 102, 110, 118)]
+
+##SC_cron_W3 <- alpha(SC_W3, na.rm = TRUE, check.keys = TRUE)
 
 
 SES <- read.csv(paste0(root_path,"Wave 1 SES.csv"),
