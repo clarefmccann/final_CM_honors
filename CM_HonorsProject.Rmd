@@ -190,13 +190,6 @@ long_HonorsData <- distinct(long_HonorsData)
 
 rm(Age,CAMM_long,CAMM_W1,CAMM_W2,CAMM_W3,Menarche,SC_long,School_Transitions,SchoolTransitions_long, SPPA_W1,SPPA_W2,SPPA_W3,SES)
 
-## mice stuff
-
-new <- mice(long_HonorsData, m=5, maxit = 50, method = 'pmm', seed = 500)
-
-long_HonorsData <- complete(new,3)
-
-
 # Make time-lagged variables
 
 LagWave1<-long_HonorsData%>%
@@ -317,7 +310,7 @@ quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+agecenter.sq,
                                      !is.na(Age_at_Menarche)))
 summary(quad_model_SC_age_cov)
 
-anova(null_model_SC_age_cov,quad_model_SC_age_cov)
+anova(null_model_SC_age_cov,quad_model_SC_age_cov, lin_model_SC_age_cov)
 
 age_by_SC<-ggplot(data=long_HonorsData,
        aes(x=Age_at_Wave,
@@ -359,7 +352,7 @@ quad_model_SC_age<-lme(SC ~ agecenter+agecenter.sq,
                              filter(!is.na(SC),
                                      !is.na(agecenter)))
 
-
+anova(null_model_SC_age, lin_model_SC_age, quad_model_SC_age)
 
 #Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence?
 
@@ -397,6 +390,7 @@ null_model_SC<-lme(SC ~ 1,
 
 # Linear model of prior CAMM predicting SC after controlling for prior SC
 lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
+                      method = "ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
@@ -418,6 +412,7 @@ null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche,
                           filter(!is.na(SC),
                                  !is.na(SES),
                                  !is.na(CAMM_lag),
+                                  !is.na(SC_lag),
                                  !is.na(Age_at_Menarche)))
 
 lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
@@ -450,57 +445,60 @@ anova(lin_model_SC_CAMM_covariates)
 # # prior CAMM and SC when SC_lag is added but only in the non-covariate model
 # 
 # # Null model filtering NAs in contemporaneous measures of SC and CAMM
-# null_model_contempSC<-lme(SC ~ 1,
-#                       method="ML",
-#                       random = ~1|tagid,
-#                       data=long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(CAMM)))
+ null_model_contempSC<-lme(SC ~ 1,
+                      method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>%
+                               filter(!is.na(SC),
+                                      !is.na(CAMM_lag),
+                                      !is.na(SC_lag)))
 ## Linear model of prior CAMM predicting SC
 
-# null_model_camm <- lme(SC ~ 1,
-#                       method ="ML",
-#                       random = ~1|tagid,
-#                       data = long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(SC_lag),
-#                                      !is.na(CAMM_lag)))
-# lin_model_CAMM<-lme(SC ~ CAMM_lag,
-#                       method="ML",
-#                       random = ~1|tagid,
-#                       data=long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(SC_lag),
-#                                      !is.na(CAMM_lag)))
+ null_model_camm <- lme(SC ~ 1,
+                       method ="ML",
+                       random = ~1|tagid,
+                       data = long_HonorsData %>%
+                               filter(!is.na(SC),
+                                      !is.na(SC_lag),
+                                      !is.na(CAMM_lag)))
+ lin_model_CAMM<-lme(SC ~ CAMM_lag,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>%
+                               filter(!is.na(SC),
+                                      !is.na(SC_lag),
+                                      !is.na(CAMM_lag)))
 # # Linear model of prior SC predicting SC
-# lin_model_baselinSC<-lme(SC ~ SC_lag,
-#                       method="ML",
-#                       random = ~1|tagid,
-#                       data=long_HonorsData %>%
-#                                filter(!is.na(SC),
-#                                       !is.na(SC_lag),
-#                                       !is.na(CAMM_lag)))
+ lin_model_baselinSC<-lme(SC ~ SC_lag,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>%
+                                filter(!is.na(SC),
+                                       !is.na(SC_lag),
+                                       !is.na(CAMM_lag)))
+ 
 # # Linear model of CAMM predicting SC (contemporaneous measurements)
-# lin_model_contempSC_CAMM<-lme(SC ~ CAMM,
-#                       method="ML",
-#                       random = ~1|tagid,
-#                       data=long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(CAMM),
-#                                      !is.na(SC_lag)))
-# 
-# lin_model_SC_CAMM_controlled<-lme(SC ~ SC_lag + CAMM_lag + CAMM,
-#                       method="ML",
-#                       random = ~1|tagid,
-#                       data=long_HonorsData %>%
-#                               filter(!is.na(SC),
-#                                      !is.na(CAMM),
-#                                      !is.na(CAMM_lag),
-#                                      !is.na(SC_lag)))
-# 
+ lin_model_contempSC_CAMM<-lme(SC ~ CAMM,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>%
+                               filter(!is.na(SC),
+                                      !is.na(CAMM),
+                                      !is.na(CAMM_lag),
+                                      !is.na(SC_lag)))
+ 
+ lin_model_SC_CAMM_controlled<-lme(SC ~ SC_lag + CAMM_lag + CAMM,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>%
+                               filter(!is.na(SC),
+                                      !is.na(CAMM),
+                                      !is.na(CAMM_lag),
+                                      !is.na(SC_lag)))
+ 
 # 
 # # Compare basic null to contemporaneous measurements model
-# anova(null_model_SC,lin_model_contempSC_CAMM,lin_model_SC_CAMM_controlled)
+# anova(null_model_contempSC,lin_model_contempSC_CAMM,lin_model_SC_CAMM_controlled)
 # summary(lin_model_SC_CAMM_controlled)
 
 
@@ -521,10 +519,8 @@ null_model_SC_Transition<-lme(SC ~ 1,
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
-                                !is.na(SES),
                                 !is.na(SC_lag),
-                                !is.na(Transition),
-                                !is.na(Age_at_Menarche)))
+                                !is.na(Transition)))
 
 lin_model_SC_Transition<-lme(SC ~ SC_lag + Transition,
                       method="ML",
@@ -576,6 +572,7 @@ null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(Age_at_Menarche)))
 
 lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
+                       method = "ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
                          filter(!is.na(SC),
