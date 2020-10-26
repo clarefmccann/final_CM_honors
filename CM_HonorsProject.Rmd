@@ -541,27 +541,52 @@ lin_model_SC_Transition<-lme(SC ~ SC_lag + Transition,
 summary(lin_model_SC_Transition)
 anova(null_model_SC_Transition,lin_model_SC_Transition)
 
+# plotting transitions with covariates 
 
-Transition_by_SC<-ggplot(data=long_HonorsData,
+data = long_HonorsData %>% 
+  filter(!is.na(SC),
+         !is.na(SES),
+         !is.na(Transition),
+         !is.na(Age_at_Menarche))
+
+# get predicted values for each individual and the fixed effect 
+
+model_to_plot = lmer(SC ~ SES + Age_at_Menarche + SC_lag + Transition + (1|tagid), data = data)
+
+# get mean ages per transition
+
+age_means = data %>%
+  group_by(Transition) %>%
+  summarize(Age_at_Wave = mean(Age_at_Wave, na.rm = TRUE))
+
+# use fixed effect CIs from the model
+cis = ggeffects::ggpredict(model_to_plot, c("Transition")) %>%
+  data.frame() %>%
+  rename("Transition" = x) %>%
+  left_join(., age_means)
+
+# plot against age
+
+transitions <- ggplot(data=data,
        aes(x=Age_at_Wave,
            y=SC))+
-  xlim(9.5,16.5)+
   xlab("Age (years)")+
-  ylim(5,20)+
   ylab("Scholastic Competence")+
   geom_line(aes(group=tagid,colour=Transition),size=.3,alpha=0.3)+
   geom_point(aes(group=tagid,colour=Transition),size=2,alpha=0.3)+
+  geom_pointrange(data = cis, aes(x = Age_at_Wave, y = predicted, color = Transition,
+                           ymin = conf.low, ymax = conf.high)) +
   scale_color_manual(name="Transition",
-                                      labels= c("No Transition",
-                                                "Middle School",
-                                                "High School"),
-                                      values = c("0"="orange",
-                                                 "1"= "purple",
-                                                 "2"= "blue"))+
-  theme(legend.position="bottom", legend.box = "horizontal", axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")+
-  facet_wrap(~Transition))
-
-Transition_by_SC + theme_minimal()
+                     labels= c("No Transition",
+                               "Middle School",
+                               "High School"),
+                     values = c("orange", "purple", "blue")) +
+  theme_minimal() +
+  theme(legend.position="bottom",
+        legend.box = "horizontal",
+        axis.title = element_text(face = "bold"),
+        legend.text = element_text(face = "bold"),
+        legend.title = element_text(face = "bold"))
 
   
 ggsave("Transitions_by_SC.png")
