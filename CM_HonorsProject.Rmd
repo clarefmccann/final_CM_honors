@@ -577,8 +577,8 @@ transitions <- ggplot(data=data,
   ylab("Scholastic Competence")+
   geom_line(aes(group=tagid,colour=Transition),size=.3,alpha=0.3)+
   geom_point(aes(group=tagid,colour=Transition),size=2,alpha=0.3)+
-  geom_pointrange(data = cis, aes(x = Age_at_Wave, y = predicted, color = Transition,
-                           ymin = conf.low, ymax = conf.high)) +
+  geom_crossbar(data = cis, aes(x = Age_at_Wave, y = predicted, color = Transition,
+                           ymin = conf.low, ymax = conf.high), width = 0.4) +
   scale_color_manual(name="Transition",
                      labels= c("No Transition",
                                "Middle School",
