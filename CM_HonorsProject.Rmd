@@ -327,7 +327,7 @@ age_by_SC<-ggplot(data=long_HonorsData,
   
 age_by_SC
 
-ggsave("Age_by_SC.tiff", width= 6, height=4, units= 'mm', dpi=600, bg = "transparent")
+ggsave("Age_by_SC.tiff", width= 6, height=4, units= 'in', dpi=600, bg = "transparent")
 
 #without covariates
 
@@ -379,7 +379,7 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
 ggsave("CAMM_by_SC.tiff",
       plot=CAMMlag_by_SC,
       bg = "transparent",
-      width= 6, height=4, units= 'mm', dpi=600)
+      width= 6, height=4, units= 'in', dpi=600)
 
 
 # First thing is to report comparing null model to one including prior CAMM as predictor
@@ -599,7 +599,7 @@ transitions <- ggplot(data=data,
   theme_minimal()
 
   
-ggsave("Transitions_by_SC.tiff", units= 'mm', dpi=600, bg = "transparent")
+ggsave("Transitions_by_SC.tiff", units= 'in', dpi=600, bg = "transparent")
 
 
 ## Add covariates
