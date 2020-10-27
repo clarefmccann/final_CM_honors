@@ -327,7 +327,7 @@ age_by_SC<-ggplot(data=long_HonorsData,
   
 age_by_SC
 
-ggsave("Age_by_SC.tiff", dpi = 300, plot = age_by_SC, bg = "transparent")
+ggsave("Age_by_SC.tiff", width= 89, height=183, units= 'mm', dpi=600, bg = "transparent")
 
 #without covariates
 
@@ -366,7 +366,7 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
   ylim(5,20)+
   ylab("Scholastic Competence")+
   geom_line(aes(group=tagid),size=.3,alpha=0.3)+
-  geom_point(aes(group=tagid,colour=wave),size=2,alpha=0.3)+
+  geom_point(aes(group=tagid,colour=wave, shape=wave),size=2,alpha=0.3)+
   geom_smooth(method='lm', formula= y~x)+
   theme(axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")) +
   scale_colour_manual(name = "wave",labels=c("1","2","3"), values= c("#00AFBB", "#E7B800", "#FC4E07"))+
@@ -376,7 +376,7 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
 ggsave("CAMM_by_SC.tiff",
       plot=CAMMlag_by_SC,
       bg = "transparent",
-      width=6, height=4, units= 'in', dpi=300)
+      width= 89, height=183, units= 'mm', dpi=600)
 
 
 # First thing is to report comparing null model to one including prior CAMM as predictor
@@ -576,7 +576,7 @@ transitions <- ggplot(data=data,
   xlab("Age (years)")+
   ylab("Scholastic Competence")+
   geom_line(aes(group=tagid,colour=Transition),size=.3,alpha=0.3)+
-  geom_point(aes(group=tagid,colour=Transition),size=2,alpha=0.3)+
+  geom_point(aes(group=tagid,colour=Transition, shape=Transition),size=2,alpha=0.3)+
   geom_crossbar(data = cis, aes(x = Age_at_Wave, y = predicted, color = Transition,
                            ymin = conf.low, ymax = conf.high), width = 0.4) +
   scale_color_manual(name="Transition",
@@ -592,7 +592,7 @@ transitions <- ggplot(data=data,
   theme_minimal()
 
   
-ggsave("Transitions_by_SC.tiff", width=6, height=4, units= 'in', dpi=300, bg = "transparent")
+ggsave("Transitions_by_SC.tiff", width= 89, height=183, units= 'mm', dpi=600, bg = "transparent")
 
 
 ## Add covariates
