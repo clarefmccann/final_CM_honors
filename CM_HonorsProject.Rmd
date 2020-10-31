@@ -357,8 +357,11 @@ anova(null_model_SC_age, lin_model_SC_age, quad_model_SC_age)
 
 #Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence?
 
-
-CAMMlag_by_SC<-ggplot(data=long_HonorsData,
+try <- long_HonorsData %>% 
+  filter(!(wave %in% c("1"))) 
+  
+  
+CAMMlag_by_SC<-ggplot(data=try,
        aes(x=CAMM_lag,
            y=SC))+
   xlim(0,40)+
@@ -369,10 +372,9 @@ CAMMlag_by_SC<-ggplot(data=long_HonorsData,
   geom_point(aes(group=tagid,colour=wave, shape=wave),size=2,alpha=0.3)+
   geom_smooth(method='lm', formula= y~x)+
   theme(axis.title = element_text(face = "bold"), legend.text = element_text(face = "bold"), legend.title = element_text(face = "bold")) +
-  scale_colour_manual(name = "wave",labels=c("1","2","3"), values= c("#00AFBB", "#E7B800", "#FC4E07"))+
-   scale_shape(name= "wave",
-              labels=c("1",
-                       "2",
+  scale_colour_manual(name = "Wave",labels=c("2","3"), values= c("#E7B800", "#FC4E07"))+
+   scale_shape(name= "Wave",
+              labels=c("2",
                        "3")) + theme_minimal()
 
 
@@ -519,13 +521,13 @@ long_HonorsData <- long_HonorsData%>%
                               Transition)))) %>%
   mutate(Transition=as.factor(Transition))
  
- long_HonorsData<-long_HonorsData %>%
-  mutate(Transition=ifelse(Transition==1,"TranMiddle",
-                           ifelse(Transition==0,"NoTran",
-                                  ifelse(Transition==2,"TranHigh",
-                           Transition)))) %>%
-  mutate(Transition=as.factor(Transition))
-levels(long_HonorsData$Transition)
+# long_HonorsData<-long_HonorsData %>%
+#  mutate(Transition=ifelse(Transition==1,"TranMiddle",
+                          # ifelse(Transition==0,"NoTran",
+                                #  ifelse(Transition==2,"TranHigh",
+                          # Transition)))) %>%
+ # mutate(Transition=as.factor(Transition))
+#levels(long_HonorsData$Transition)
 
 null_model_SC_Transition<-lme(SC ~ 1,
                       method="ML",
@@ -681,9 +683,9 @@ long_HonorsData$wave <-
 
 long_HonorsData$Transition <- 
   factor(long_HonorsData$Transition, levels=c(0, 1, 2),
-         labels=c("Transitoned to Middle School",
-                  "Transitioned to High School",
-                  "No Transition"))
+         labels=c("No Transition",
+                  "Transitioned to Middle School",
+                  "Transitioned to High School"))
 
 label(long_HonorsData$Age_at_Wave) <- "Age"
 label(long_HonorsData$CAMM) <- "Child and Adolescent Mindfulnes Measure scores"
@@ -692,6 +694,10 @@ label(long_HonorsData$SC) <- "Self-Perceived Scholastic Competence"
 units(long_HonorsData$Age_at_Wave) <- "years"
 
 table1(~ Transition + Age_at_Wave + CAMM + SC | wave, data=long_HonorsData, overall = "Total", topclass = "Rtable1-grid Rtable1-shade Rtable1-times")
+
+
+
+
 
 ```
 
