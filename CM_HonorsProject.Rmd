@@ -1,5 +1,5 @@
 ---
-title: "Examining scholastic competence, mindfulness & school transition in adolescent girls" 
+title: "Trait mindfulness increases self-perceived scholastic competence in adolescent girls" 
 author: "Clare McCann & Kate Mills"
 output: html_document
 ---
@@ -37,6 +37,8 @@ root_path="~/Documents/Honors_Project/honors_cm/"
 
 Load datasets
 ```{r}
+
+##pulling CSV files & calculating cronbach alpha
 
 CAMM_W1<-read.csv(paste0(root_path,"CAMM_Wave1.csv"),
                   stringsAsFactors = FALSE) %>%
@@ -126,9 +128,9 @@ colnames(School_Transitions)[1] <- "tagid"
 
 #coding for transitions 
 
-# 0 = transitioned to middle school 
-# 1 = transitioned to high school 
-# 2 = no transition prior to wave 
+# 1 = transitioned to middle school 
+# 2 = transitioned to high school 
+# 0 = no transition prior to wave 
 
 
 ```
@@ -168,10 +170,13 @@ long_HonorsData <- full_join(long_HonorsData, Menarche, by=c("tagid")) %>%
   distinct(.)
 
 # remove rows without School Transitions data
+
 long_HonorsData <- long_HonorsData[is.na(long_HonorsData$Transition) == FALSE, ]
 
 # identify participants with duplicate data
+
 #long_HonorsData$tagid_wave <- paste(long_HonorsData$tagid, long_HonorsData$wave, sep="_") # create a new variable that combines subject ID and wave information
+
 #long_HonorsData[duplicated(long_HonorsData$tagid_wave), ] # see duplicated data
 
 # note that duplicated data exists for TAG166 at wave 2. Take the average of all CAMM and SC values
@@ -219,6 +224,8 @@ long_HonorsData<-long_HonorsData%>%
                        ifelse(wave==3,CAMM_lag.y,
                               NA)))
 
+#removing extra columns
+
 long_HonorsData<-long_HonorsData %>%
   select(-SC_lag.x,-SC_lag.y,-CAMM_lag.x,-CAMM_lag.y)
 
@@ -232,14 +239,22 @@ long_HonorsData<-long_HonorsData %>%
 
 ```{r}
 
+##organizing data
+
+#reording columns
+
 long_HonorsData <- long_HonorsData[c(1,3,2,4,5,6,7,8,9,10)]
+
+# renaming columns 
 
 colnames(long_HonorsData)[7] <- "SES"
 colnames(long_HonorsData)[8] <- "Age_at_Menarche"
 colnames(long_HonorsData)[6]<- "Age_at_Wave"
 
+
 long_HonorsData$SES <- as.numeric(long_HonorsData$SES)
 
+# removing N/A 
 long_HonorsData <- long_HonorsData %>% mutate(SES = na_if(SES, 7))
 
 long_HonorsData$SES<-ordered(as.factor(long_HonorsData$SES))
@@ -253,6 +268,8 @@ str(long_HonorsData)
 
 Descriptives
 ```{r}
+
+#visualizing data
 
 library("ggpubr")
 
@@ -272,14 +289,12 @@ ggboxplot(long_HonorsData, x = "wave", y = "SC",
 
 Analysis
 ```{r}
+# making a mean centered age variable 
 
 long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
 long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
 
 #Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
-
-#gamm_model_SC_age=gamm(SC~s(Age_at_Wave, bs = "cs", k = 4), data=long_HonorsData, random=list(tagid=~1))
-#summary.gam(gamm_model_SC_age)
 
 null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche,
                       method="ML",
@@ -312,6 +327,8 @@ summary(quad_model_SC_age_cov)
 
 anova(null_model_SC_age_cov,quad_model_SC_age_cov, lin_model_SC_age_cov)
 
+# graph for question 1 
+
 age_by_SC<-ggplot(data=long_HonorsData,
        aes(x=Age_at_Wave,
            y=SC))+
@@ -327,9 +344,11 @@ age_by_SC<-ggplot(data=long_HonorsData,
   
 age_by_SC
 
+# saving graph as tiff
+
 ggsave("Age_by_SC.tiff", width= 6, height=4, units= 'in', dpi=600, bg = "transparent")
 
-#without covariates
+# question 1 without covariates
 
 null_model_SC_age<-lme(SC ~ 1,
                       method="ML",
@@ -357,10 +376,13 @@ anova(null_model_SC_age, lin_model_SC_age, quad_model_SC_age)
 
 #Q2: How much do prior levels of self-reported mindfulness predict self-perceived scholastic competence?
 
+#removing wave 1 from graph since time-lagged 
+
 try <- long_HonorsData %>% 
   filter(!(wave %in% c("1"))) 
   
-  
+# graph for question 2
+
 CAMMlag_by_SC<-ggplot(data=try,
        aes(x=CAMM_lag,
            y=SC))+
@@ -377,6 +399,7 @@ CAMMlag_by_SC<-ggplot(data=try,
               labels=c("2",
                        "3")) + theme_minimal()
 
+#saving graph for question 2
 
 ggsave("CAMM_by_SC.tiff",
       plot=CAMMlag_by_SC,
@@ -387,7 +410,7 @@ ggsave("CAMM_by_SC.tiff",
 # First thing is to report comparing null model to one including prior CAMM as predictor
 # with prior SC as covariate
   
-# Null model filtering NAs in lags and contemporaneous measures of SC and CAMM
+# Null model filtering NAs in lags and contemporaneous measures of SC and CAMM without covariates
 null_model_SC<-lme(SC ~ 1,
                       method="ML",
                       random = ~1|tagid,
@@ -407,9 +430,7 @@ lin_model_SC_CAMM<-lme(SC ~ SC_lag + CAMM_lag,
 
 # Comapre null to linear model w/ predictors and the linear model is better
 anova(null_model_SC,lin_model_SC_CAMM)
-# But when looking at the summary, it's clear that it's better only because prior levels of
-# SC are predictive of subsequent SC and prior levels of CAMM don't explain a significant
-# portion of additional variance
+
 summary(lin_model_SC_CAMM)
 
 # Now, examine with all the preregistered covariates included
@@ -521,6 +542,8 @@ long_HonorsData <- long_HonorsData%>%
                               Transition)))) %>%
   mutate(Transition=as.factor(Transition))
  
+# use in analysis, don't use to make table 1 
+
 # long_HonorsData<-long_HonorsData %>%
 #  mutate(Transition=ifelse(Transition==1,"TranMiddle",
                           # ifelse(Transition==0,"NoTran",
@@ -626,14 +649,6 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                                 !is.na(Transition),
                                 !is.na(Age_at_Menarche)))
 
-##mod1 <- lmer(SC ~ 1 + SC_lag + (1 + SC_lag | Transition), data=long_HonorsData)
-
-
-##coef(mod1)$Transition
-
-##intercepts <- coef(mod1)$Transition[,1]
-##slopes <- coef(mod1)$Transition[,2]
-##average <- summary(mod1)$coef
 
 
 summary(lin_SC_Transition_covariates)
