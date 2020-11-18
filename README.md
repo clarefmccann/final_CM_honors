@@ -1,2 +1,5 @@
 # final_CM_honors
-final repository of honors project, 2020
+
+Trait mindfulness increases self-perceived scholastic competence in adolescent girls
+
+final repository for publication
