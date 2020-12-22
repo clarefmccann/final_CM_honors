@@ -109,6 +109,22 @@ School_Transitions <- read.csv(paste0(root_path,"Grade Transitions CM Honors.csv
                                stringsAsFactors = FALSE) %>% 
   select(tagid, Transitioned_W1, Transitioned_W2, Transitioned_W3)
 
+Grades_W1 <-read.csv(paste0(root_path,"W1_School_Info.csv"),
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, Grades_Average)
+
+Grades_W2 <-read.csv(paste0(root_path,"W2_School_Info.csv"),
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, Grades_Average)
+
+Grades_W3 <-read.csv(paste0(root_path,"W3_School_Info.csv"),
+                  stringsAsFactors = FALSE)  %>%
+              select(tagid, Grades_Average)  
+
+Grades_W1$Grades_Average
+
+               
+
 #School_Transitions <-na.omit(School_Transitions)
 
 
@@ -118,13 +134,41 @@ School_Transitions <-School_Transitions %>%
   mutate(no_underscores=paste0("TAG",
                                substring(tagid,first=5,last=length(tagid))))
 
+Grades_W1 <-Grades_W1 %>%
+  mutate(no_underscores=paste0("TAG",
+                               substring(tagid,first=5,last=length(tagid))))
+
+
+Grades_W2 <-Grades_W2 %>%
+  mutate(no_underscores=paste0("TAG",
+                               substring(tagid,first=5,last=length(tagid))))
+
+Grades_W3 <-Grades_W3 %>%
+  mutate(no_underscores=paste0("TAG",
+                               substring(tagid,first=5,last=length(tagid))))
+
 #Reorganizing columns 
 
 School_Transitions <- School_Transitions[,-1]
 School_Transitions <- School_Transitions[c(4,1,2,3)]
 
 colnames(School_Transitions)[1] <- "tagid"
-  
+
+Grades_W1 <- Grades_W1[,-1]
+Grades_W2 <- Grades_W2[,-1]
+Grades_W3 <- Grades_W3[,-1]
+
+Grades_W1 <- Grades_W1[c(2,1)]
+Grades_W2 <- Grades_W2[c(2,1)]
+Grades_W3 <- Grades_W3[c(2,1)]
+
+colnames(Grades_W1)[1] <- "tagid"
+colnames(Grades_W2)[1] <- "tagid"
+colnames(Grades_W3)[1] <- "tagid"
+
+Grades_W1$Grades_Average <- as.integer(Grades_W1$Grades_Average)
+Grades_W2$Grades_Average <- as.integer(Grades_W2$Grades_Average)
+Grades_W3$Grades_Average <- as.integer(Grades_W3$Grades_Average)
 
 #coding for transitions 
 
@@ -147,6 +191,11 @@ SC_long<-full_join(SPPA_W1,full_join(SPPA_W2,SPPA_W3)) %>%
   gather(Wave_SC, SC, SC_W1:SC_W3) %>%
   mutate(wave = substr(Wave_SC, 5, 5)) %>%
   select(-Wave_SC)
+
+Grades_long <- full_join(Grades_W1, full_join(Grades_W2,Grades_W3)) %>%
+  gather(Wave_Grades, Grades, Grades_W1:Grades_W3) %>%
+  mutate(wave = substr(Wave_Grades, 9, 9)) %>%
+  select(-Wave_Grades)
 
 long_HonorsData <- full_join(CAMM_long, SC_long)
 
