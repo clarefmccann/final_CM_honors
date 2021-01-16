@@ -166,9 +166,13 @@ colnames(Grades_W1)[1] <- "tagid"
 colnames(Grades_W2)[1] <- "tagid"
 colnames(Grades_W3)[1] <- "tagid"
 
-Grades_W1$Grades_Average <- as.integer(Grades_W1$Grades_Average)
-Grades_W2$Grades_Average <- as.integer(Grades_W2$Grades_Average)
-Grades_W3$Grades_Average <- as.integer(Grades_W3$Grades_Average)
+Grades_W1$Grades_Average <- as.character(Grades_W1$Grades_Average)
+Grades_W2$Grades_Average <- as.character(Grades_W2$Grades_Average)
+Grades_W3$Grades_Average <- as.character(Grades_W3$Grades_Average)
+
+colnames(Grades_W1)[2] <- "Grades_W1"
+colnames(Grades_W2)[2] <- "Grades_W2"
+colnames(Grades_W3)[2] <- "Grades_W3"
 
 #coding for transitions 
 
@@ -198,7 +202,9 @@ Grades_long <- full_join(Grades_W1, full_join(Grades_W2,Grades_W3)) %>%
   select(-Wave_Grades)
 
 long_HonorsData <- full_join(CAMM_long, SC_long)
-
+long_HonorsData <- full_join(Grades_long, long_HonorsData, by=c("tagid", "wave")) %>%
+  distinct(.)
+  
 SchoolTransitions_long<-School_Transitions %>% gather(Wave_Transitioned, Transition, Transitioned_W1:Transitioned_W3) %>%
   mutate(wave = substr(Wave_Transitioned, 15, 15)) %>%
   select(-Wave_Transitioned)
@@ -292,7 +298,7 @@ long_HonorsData<-long_HonorsData %>%
 
 #reording columns
 
-long_HonorsData <- long_HonorsData[c(1,3,2,4,5,6,7,8,9,10)]
+long_HonorsData <- long_HonorsData[c(1,3,2,4,5,6,7,8,9,10,11)]
 
 # renaming columns 
 
@@ -310,6 +316,7 @@ long_HonorsData$SES<-ordered(as.factor(long_HonorsData$SES))
 long_HonorsData$Transition <- as.factor(long_HonorsData$Transition)
 long_HonorsData$tagid <- as.factor(long_HonorsData$tagid)
 long_HonorsData$wave <- as.factor(long_HonorsData$wave)
+long_HonorsData$Grades <- as.factor(long_HonorsData$Grades)
 str(long_HonorsData)
 
 
@@ -336,7 +343,7 @@ ggboxplot(long_HonorsData, x = "wave", y = "SC",
                
 ```
 
-Analysis
+Analysis using SPPA-SC as dependent variable
 ```{r}
 # making a mean centered age variable 
 
@@ -704,6 +711,58 @@ summary(lin_SC_Transition_covariates)
 anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
 
 ```
+
+```{r}
+
+# making a mean centered age variable 
+
+long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
+long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
+
+#Q1: Does academic acheivement change across early adolescence in girls?  
+
+null_model_aa_age_cov<-lme(Grades ~ SES+Age_at_Menarche,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(Grades),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+
+lin_model_aa_age_cov<-lme(Grades ~ SES+Age_at_Menarche+agecenter,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(Grades),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+summary(lin_model_aa_age_cov)
+
+quad_model_aa_age_cov<-lme(Grades ~ SES+Age_at_Menarche+agecenter+agecenter.sq,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                             filter(!is.na(Grades),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche)))
+summary(quad_model_aa_age_cov)
+
+anova(null_model_aa_age_cov,quad_model_aa_age_cov, lin_model_aa_age_cov)
+
+
+```
+
+
+
+
+
+
+
+
+
 
 
 Creating Descriptive Tables 
