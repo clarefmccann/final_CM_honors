@@ -372,36 +372,33 @@ long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecent
 
 #Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
 
-null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades,
+null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
                                      !is.na(agecenter),
                                      !is.na(SES),
-                                     !is.na(Age_at_Menarche),
-                                     !is.na(Grades)))
+                                     !is.na(Age_at_Menarche)))
 
-lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+Grades,
+lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
                                      !is.na(agecenter),
                                      !is.na(SES),
-                                     !is.na(Age_at_Menarche),
-                                     !is.na(Grades)))
+                                     !is.na(Age_at_Menarche)))
 summary(lin_model_SC_age_cov)
 
-quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades+agecenter+agecenter.sq,
+quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+agecenter.sq,
                       method="ML",
                       random = ~1|tagid,
                       data=long_HonorsData %>% 
                              filter(!is.na(SC),
                                      !is.na(agecenter),
                                      !is.na(SES),
-                                     !is.na(Age_at_Menarche),
-                                    !is.na(Grades)))
+                                     !is.na(Age_at_Menarche)))
 summary(quad_model_SC_age_cov)
 
 anova(null_model_SC_age_cov,quad_model_SC_age_cov, lin_model_SC_age_cov)
@@ -513,7 +510,7 @@ anova(null_model_SC,lin_model_SC_CAMM)
 summary(lin_model_SC_CAMM)
 
 # Now, examine with all the preregistered covariates included
-null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
+null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche,
                         method="ML",
                         random = ~1|tagid,
                         data=long_HonorsData %>% 
@@ -521,11 +518,10 @@ null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
                                  !is.na(SES),
                                  !is.na(CAMM_lag),
                                   !is.na(SC_lag),
-                                 !is.na(Age_at_Menarche),
-                                 !is.na(Grades)
+                                 !is.na(Age_at_Menarche)
                               ))
 
-lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag+Grades,
+lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
@@ -533,8 +529,7 @@ lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag+Grade
                                 !is.na(SES),
                                 !is.na(SC_lag),
                                 !is.na(CAMM_lag),
-                                !is.na(Age_at_Menarche),
-                                !is.na(Grades)))
+                                !is.na(Age_at_Menarche)))
 
 lin_model_SC_covariates<-(lme(SC ~ SES+Age_at_Menarche+SC_lag,
                        method="ML",
@@ -744,6 +739,112 @@ ggsave("Transitions_by_SC.tiff", units= 'in', dpi=600, bg = "transparent")
 
 ## Add covariates
 
+null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche,
+                        method="ML",
+                        random = ~1|tagid,
+                        data=long_HonorsData %>% 
+                          filter(!is.na(SC),
+                                 !is.na(SES),
+                                 !is.na(SC_lag),
+                                 !is.na(Transition),
+                                 !is.na(Age_at_Menarche))
+
+lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition+Grades,
+                       method = "ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(Transition),
+                                !is.na(Age_at_Menarche))
+
+
+
+summary(lin_SC_Transition_covariates)
+anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
+
+```
+```{r}
+# making a mean centered age variable 
+
+long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
+long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
+
+#Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
+
+null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche),
+                                     !is.na(Grades)))
+
+lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+Grades,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                              filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche),
+                                     !is.na(Grades)))
+summary(lin_model_SC_age_cov)
+
+quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades+agecenter+agecenter.sq,
+                      method="ML",
+                      random = ~1|tagid,
+                      data=long_HonorsData %>% 
+                             filter(!is.na(SC),
+                                     !is.na(agecenter),
+                                     !is.na(SES),
+                                     !is.na(Age_at_Menarche),
+                                    !is.na(Grades)))
+
+# question 2 w/ grades
+
+null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
+                        method="ML",
+                        random = ~1|tagid,
+                        data=long_HonorsData %>% 
+                          filter(!is.na(SC),
+                                 !is.na(SES),
+                                 !is.na(CAMM_lag),
+                                  !is.na(SC_lag),
+                                 !is.na(Age_at_Menarche),
+                                 !is.na(Grades)
+                              ))
+
+lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag+Grades,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(CAMM_lag),
+                                !is.na(Age_at_Menarche),
+                                !is.na(Grades)))
+
+lin_model_SC_covariates<-(lme(SC ~ SES+Age_at_Menarche+SC_lag,
+                       method="ML",
+                       random = ~1|tagid,
+                       data=long_HonorsData %>% 
+                         filter(!is.na(SC),
+                                !is.na(SES),
+                                !is.na(SC_lag),
+                                !is.na(CAMM_lag),
+                                !is.na(Age_at_Menarche))))
+
+summary(lin_model_SC_CAMM)
+anova(null_model_SC_CAMM_covariates,lin_model_SC_covariates,lin_model_SC_CAMM_covariates)
+anova(lin_model_SC_CAMM_covariates)
+
+# question three w/ grades
+
 null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
                         method="ML",
                         random = ~1|tagid,
@@ -768,10 +869,15 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition+Gra
 
 
 
-summary(lin_SC_Transition_covariates)
-anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
+
+
+
+
+
 
 ```
+
+
 
 
 Creating Descriptive Tables 
