@@ -577,14 +577,14 @@ lin_model_aa_SC <- lme(SC ~ Grades,
 
 ## SES and self-perceived scholastic competence 
 
-null_model_aa_SC <- lme(SC ~ 1, 
+null_model_ses_SC <- lme(SC ~ 1, 
                         method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>%
                                filter(!is.na(SC),
                                       !is.na(SES)))
 
-null_model_aa_SC <- lme(SC ~ SES, 
+lin_model_ses_SC <- lme(SC ~ SES, 
                         method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>%
@@ -747,9 +747,9 @@ null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche,
                                  !is.na(SES),
                                  !is.na(SC_lag),
                                  !is.na(Transition),
-                                 !is.na(Age_at_Menarche))
+                                 !is.na(Age_at_Menarche)))
 
-lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition+Grades,
+lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                        method = "ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
@@ -757,7 +757,7 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition+Gra
                                 !is.na(SES),
                                 !is.na(SC_lag),
                                 !is.na(Transition),
-                                !is.na(Age_at_Menarche))
+                                !is.na(Age_at_Menarche)))
 
 
 
@@ -765,6 +765,7 @@ summary(lin_SC_Transition_covariates)
 anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
 
 ```
+
 ```{r}
 # making a mean centered age variable 
 
