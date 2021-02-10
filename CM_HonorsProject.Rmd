@@ -361,6 +361,10 @@ ggboxplot(long_HonorsData, x = "wave", y = "CAMM",
 ggboxplot(long_HonorsData, x = "wave", y = "SC",
           color = "wave",
           palette = c("#00AFBB", "#E7B800", "#FC4E07"))
+
+ggboxplot(long_HonorsData, x = "wave", y = "SC",
+          color = "Grades",
+          palette = c("#00AFBB", "#E7B800", "#FC4E07", ))
                
 ```
 
@@ -575,6 +579,26 @@ lin_model_aa_SC <- lme(SC ~ Grades,
                        data=long_HonorsData %>%
                                filter(!is.na(SC),
                                       !is.na(Grades)))
+
+## SPPA & academic acheivement 
+
+install.packages("mlVAR")
+library("mlVAR")
+
+debug(mlVAR)
+
+var_sc_aa <- mlVAR(long_HonorsData,
+                c("SC", "Grades"),
+                "tagid",
+                estimator="lmer",
+                lags = 1,
+                temporal = "fixed")
+                
+
+summary(var_h3)
+plot(var_h3, "temporal", title = "Estimated temporal relationships", layout = "circle")
+plot(var_h3, "contemporaneous", title = "Estimated contemporaneous relationships",
+    layout = "circle")
 
 ## SES and self-perceived scholastic competence 
 
