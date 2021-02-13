@@ -406,7 +406,7 @@ quad_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+agecenter.sq,
                                      !is.na(Age_at_Menarche)))
 summary(quad_model_SC_age_cov)
 
-anova(null_model_SC_age_cov,quad_model_SC_age_cov, lin_model_SC_age_cov)
+anova(null_model_SC_age_cov,lin_model_SC_age_cov, quad_model_SC_age_cov)
 
 # graph for question 1 
 
@@ -580,26 +580,6 @@ lin_model_aa_SC <- lme(SC ~ Grades,
                                filter(!is.na(SC),
                                       !is.na(Grades)))
 
-## SPPA & academic acheivement 
-
-install.packages("mlVAR")
-library("mlVAR")
-
-debug(mlVAR)
-
-var_sc_aa <- mlVAR(long_HonorsData,
-                c("SC", "Grades"),
-                "tagid",
-                estimator="lmer",
-                lags = 1,
-                temporal = "fixed")
-                
-
-summary(var_h3)
-plot(var_h3, "temporal", title = "Estimated temporal relationships", layout = "circle")
-plot(var_h3, "contemporaneous", title = "Estimated contemporaneous relationships",
-    layout = "circle")
-
 ## SES and self-perceived scholastic competence 
 
 null_model_ses_SC <- lme(SC ~ 1, 
@@ -678,14 +658,15 @@ long_HonorsData <- long_HonorsData%>%
   mutate(Transition=as.factor(Transition))
  
 # use in analysis, don't use to make table 1 
+long_HonorsData<-long_HonorsData %>%
+mutate(Transition=ifelse(Transition==1,"TranMiddle",
+                          ifelse(Transition==0,"NoTran",
+                                 ifelse(Transition==2,"TranHigh",
+                          Transition)))) %>%
+ mutate(Transition=as.factor(Transition))
 
-# long_HonorsData<-long_HonorsData %>%
-#  mutate(Transition=ifelse(Transition==1,"TranMiddle",
-                          # ifelse(Transition==0,"NoTran",
-                                #  ifelse(Transition==2,"TranHigh",
-                          # Transition)))) %>%
- # mutate(Transition=as.factor(Transition))
-#levels(long_HonorsData$Transition)
+levels(long_HonorsData$Transition)
+
 
 null_model_SC_Transition<-lme(SC ~ 1,
                       method="ML",
@@ -844,7 +825,7 @@ null_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
                                  !is.na(Grades)
                               ))
 
-lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+CAMM_lag+Grades,
+lin_model_SC_CAMM_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades+SC_lag+CAMM_lag,
                        method="ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
@@ -882,7 +863,7 @@ null_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades,
                                  !is.na(Age_at_Menarche),
                                  !is.na(Grades)))
 
-lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition+Grades,
+lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades+SC_lag+Transition,
                        method = "ML",
                        random = ~1|tagid,
                        data=long_HonorsData %>% 
