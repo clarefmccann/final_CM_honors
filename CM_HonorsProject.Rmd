@@ -115,11 +115,11 @@ Grades_W1 <-read.csv(paste0(root_path,"W1_School_Info.csv"),
 
 Grades_W2 <-read.csv(paste0(root_path,"W2_School_Info.csv"),
                   stringsAsFactors = FALSE)  %>%
-              select(tagid, Grades_Average)
+              select(tagid, Grades_Average) 
 
 Grades_W3 <-read.csv(paste0(root_path,"W3_School_Info.csv"),
                   stringsAsFactors = FALSE)  %>%
-              select(tagid, Grades_Average)  
+              select(tagid, Grades_Average) 
 
 Grades_W1$Grades_Average
 
@@ -173,6 +173,8 @@ Grades_W3$Grades_Average <- as.character(Grades_W3$Grades_Average)
 colnames(Grades_W1)[2] <- "Grades_W1"
 colnames(Grades_W2)[2] <- "Grades_W2"
 colnames(Grades_W3)[2] <- "Grades_W3"
+
+
 
 #coding for transitions 
 
@@ -279,8 +281,8 @@ long_HonorsData<-long_HonorsData%>%
                        ifelse(wave==3,CAMM_lag.y,
                               NA)))
 
-
-
+long_HonorsData <- na_if(long_HonorsData, "-3")
+long_HonorsData <- na_if(long_HonorsData, "-9")
   #removing extra columns
 
 long_HonorsData<-long_HonorsData %>%
@@ -339,7 +341,7 @@ long_HonorsData <- long_HonorsData %>%
                                                 ifelse(Grades==5,"F",
                               Grades))))))
 
-long_HonorsData$Grades <- longselect(c(-"-3", -"-9"))
+
 
 
 
@@ -886,7 +888,7 @@ library("ordinal")
 
 long_HonorsData$Grades_ordered <- as.ordered(long_HonorsData$Grades)
 
-sppa_grades <- clmm(Grades_ordered ~ SC + (1 | tagid), data = long_HonorsData, Hess=TRUE, na.action = na.omit) 
+sppa_grades <- clmm(Grades_ordered ~ SC + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
 
 ctable <- coef(summary(sppa_grades))
 
