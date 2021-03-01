@@ -331,14 +331,16 @@ long_HonorsData <- long_HonorsData%>%
                               SES)))))) %>%
   mutate(SES=as.factor(SES)) 
 
-long_HonorsData <- long_HonorsData%>%
+long_HonorsData <- long_HonorsData %>%
   mutate(Grades=ifelse(Grades==1, "A",
                            ifelse(Grades==2, "B",
                                   ifelse(Grades==3,"C",
                                          ifelse(Grades==4,"D",
                                                 ifelse(Grades==5,"F",
-                              Grades)))))) %>%
-  mutate(Grades=as.factor(Grades)) 
+                              Grades))))))
+
+long_HonorsData$Grades <- longselect(c(-"-3", -"-9"))
+
 
 
 ```
@@ -877,10 +879,16 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades+SC_lag+Transit
 
 
 
+### trying to figure out how to run sppa predicting grades 
 
+install.packages("ordinal")
+library("ordinal")
 
+long_HonorsData$Grades_ordered <- as.ordered(long_HonorsData$Grades)
 
+sppa_grades <- clmm(Grades_ordered ~ SC + (1 | tagid), data = long_HonorsData, Hess=TRUE, na.action = na.omit) 
 
+ctable <- coef(summary(sppa_grades))
 
 ```
 
