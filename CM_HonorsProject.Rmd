@@ -337,9 +337,11 @@ long_HonorsData <- long_HonorsData %>%
   mutate(Grades=ifelse(Grades==1, "A",
                            ifelse(Grades==2, "B",
                                   ifelse(Grades==3,"C",
-                                         ifelse(Grades==4,"D",
-                                                ifelse(Grades==5,"F",
-                              Grades))))))
+                                         ifelse(Grades==4,"NP",
+                                                ifelse(Grades==5,"NP",
+                              Grades)))))) %>%
+  mutate(Grades=as.factor(Grades))
+  
 
 
 
