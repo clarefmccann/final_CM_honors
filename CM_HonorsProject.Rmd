@@ -785,7 +785,7 @@ long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
 long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
 
 long_HonorsData %>%
-  group_by(tagid) %>%
+  group(tagid) %>%
   summarise(mean_age = mean(Age_at_Wave))
 
 #Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
