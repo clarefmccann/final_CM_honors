@@ -784,9 +784,13 @@ anova(null_SC_Transition_covariates,lin_SC_Transition_covariates)
 long_HonorsData$agecenter<-(long_HonorsData$Age_at_Wave-12.5)
 long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecenter)
 
-long_HonorsData %>%
-  group(tagid) %>%
+mean_age <- long_HonorsData %>%
+  group_by(tagid) %>%
   summarise(mean_age = mean(Age_at_Wave))
+
+long_HonorsData <- full_join(long_HonorsData, mean_age, by=c("tagid")) %>%
+  distinct(.)
+
 
 #Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
 
@@ -808,6 +812,7 @@ lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+Grades,
                                      !is.na(agecenter),
                                      !is.na(SES),
                                      !is.na(Age_at_Menarche),
+                                     !is.na(mean_age),
                                      !is.na(Grades)))
 summary(lin_model_SC_age_cov)
 
