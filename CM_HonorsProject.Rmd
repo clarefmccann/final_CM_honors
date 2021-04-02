@@ -786,19 +786,19 @@ long_HonorsData$agecenter.sq<-(long_HonorsData$agecenter*long_HonorsData$agecent
 
 ## add random slope to age question, compare models w/ and w/o to see best fit
 
-mean_age <- long_HonorsData %>%
-  group_by(tagid) %>%
-  summarise(mean_age = mean(Age_at_Wave))
+#mean_age <- long_HonorsData %>%
+  #group_by(tagid) %>%
+  #summarise(mean_age = mean(Age_at_Wave))
 
-long_HonorsData <- full_join(long_HonorsData, mean_age, by=c("tagid")) %>%
-  distinct(.)
+#long_HonorsData <- full_join(long_HonorsData, mean_age, by=c("tagid")) %>%
+  #distinct(.)
 
 
 #Q1: Does self-perceived scholastic competence change across early adolescence in girls?  
 
 null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades,
                       method="ML",
-                      random = ~1|tagid,
+                      random = ~1 | tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
                                      !is.na(agecenter),
@@ -808,13 +808,12 @@ null_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+Grades,
 
 lin_model_SC_age_cov<-lme(SC ~ SES+Age_at_Menarche+agecenter+Grades,
                       method="ML",
-                      random = ~1|tagid,
+                      random = ~1 | tagid,
                       data=long_HonorsData %>% 
                               filter(!is.na(SC),
                                      !is.na(agecenter),
                                      !is.na(SES),
                                      !is.na(Age_at_Menarche),
-                                     !is.na(mean_age),
                                      !is.na(Grades)))
 summary(lin_model_SC_age_cov)
 
@@ -895,6 +894,7 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades+SC_lag+Transit
 ### trying to figure out how to run sppa predicting grades 
 
 install.packages("ordinal")
+install.packages("devtools")
 library("ordinal")
 
 long_HonorsData$Grades_ordered <- as.ordered(long_HonorsData$Grades)
@@ -903,8 +903,13 @@ sppa_grades <- clmm(Grades_ordered ~ SC_lag + (1 | tagid), data = long_HonorsDat
 
 ## look at concurrent SPPA-SC too, report z-value & p of both
 
-sppa_grades <- clmm(Grades_ordered ~ SC + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
+grades_sppa <- clmm(Grades_ordered ~ SC + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
 
+##nulls 
+
+sppa_grades.null <- clmm(Grades_ordered ~ 1 + (1 | tagid), data = long_HonorsData, Hess = TRUE)
+
+grades_sppa.null <- clmm(Grades_ordered ~ 1 + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
 
 ctable <- coef(summary(sppa_grades))
 
