@@ -899,7 +899,7 @@ library("ordinal")
 
 long_HonorsData$Grades_ordered <- as.ordered(long_HonorsData$Grades)
 
-sppa_grades <- clmm(Grades_ordered ~ SC_lag + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
+sppa_grades <- clmm(Grades_ordered ~ SC_lag + (1 | tagid), data = long_HonorsData, link = "logit", Hess=TRUE) 
 
 ## look at concurrent SPPA-SC too, report z-value & p of both
 
@@ -911,7 +911,13 @@ sppa_grades.null <- clmm(Grades_ordered ~ 1 + (1 | tagid), data = long_HonorsDat
 
 grades_sppa.null <- clmm(Grades_ordered ~ 1 + (1 | tagid), data = long_HonorsData, Hess=TRUE) 
 
-ctable <- coef(summary(sppa_grades))
+(ci <- confint(sppa_grades))
+exp(cbind(OR = coef(sppa_grades), ci))
+ctable <- exp(coef(sppa_grades))
+
+(ci <- confint(grades_sppa))
+exp(cbind(OR = coef(grades_sppa), ci))
+ctable <- exp(coef(grades_sppa))
 
 ```
 
