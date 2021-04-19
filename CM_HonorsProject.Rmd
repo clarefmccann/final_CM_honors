@@ -372,10 +372,11 @@ ggboxplot(long_HonorsData, x = "wave", y = "SC",
           color = "Grades",
           palette = c("#00AFBB", "#E7B800", "#FC4E07","#82204A"))
 
-ggboxplot(long_HonorsData, x = "Grades", y = "SC",
-          color = "Grades",
-          palette = c("#00AFBB", "#E7B800", "#FC4E07", "#82204A"))
-               
+grades_for_plot <-long_HonorsData %>% filter(Grades %in% c('A','B', 'C', 'NP'))
+
+ggboxplot(grades_for_plot, x = "Grades", y = "SC",
+          color = "Grades", 
+          palette = c("#00AFBB", "#E7B800", "#FC4E07","#82204A"))     
 ```
 
 Analysis using SPPA-SC as dependent variable
@@ -981,8 +982,12 @@ units(long_HonorsData$Age_at_Wave) <- "years"
 
 table1(~ Transition + Age_at_Wave + CAMM + SC | wave, data=long_HonorsData, overall = "Total", topclass = "Rtable1-grid Rtable1-shade Rtable1-times")
 
+## trying stargazer 
 
+install.packages('stargazer')
+library(stargazer)
 
+stargazer(null_model_SC_age_cov, lin_model_SC_age_cov, quad_model_SC_age_cov, type = "", style = "all", out = '~/Desktop/Research/age_grades_sc_table.txt')
 
 
 ```
