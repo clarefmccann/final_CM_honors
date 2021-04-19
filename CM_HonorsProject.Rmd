@@ -370,7 +370,11 @@ ggboxplot(long_HonorsData, x = "wave", y = "SC",
 
 ggboxplot(long_HonorsData, x = "wave", y = "SC",
           color = "Grades",
-          palette = c("#00AFBB", "#E7B800", "#FC4E07", ))
+          palette = c("#00AFBB", "#E7B800", "#FC4E07","#82204A"))
+
+ggboxplot(long_HonorsData, x = "Grades", y = "SC",
+          color = "Grades",
+          palette = c("#00AFBB", "#E7B800", "#FC4E07", "#82204A"))
                
 ```
 
