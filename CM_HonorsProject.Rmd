@@ -19,7 +19,7 @@ packages <-  c("tidyverse", "lavaan",
                "nlme", "lme4",
                "data.table", "psych",
                "parallel","lubridate",
-               "mgcv", "ggpubr", "broom", "table1", "ggeffects")
+               "mgcv", "ggpubr", "broom", "table1", "ggeffects", "stargazer")
 lapply(packages, library, character.only = TRUE)
 ```
 
@@ -555,9 +555,6 @@ anova(lin_model_SC_CAMM_covariates)
 
 ## trying stargazer 
 
-install.packages('stargazer')
-library(stargazer)
-
 stargazer(null_model_SC_CAMM_covariates, lin_model_SC_CAMM_covariates, type = "html", out="~/Desktop/Research/camm_cov_table.doc")
 
 ############################################
@@ -642,16 +639,8 @@ lin_model_ses_SC <- lme(SC ~ SES,
                                       !is.na(CAMM_lag),
                                       !is.na(SC_lag)))
  
- lin_model_SC_CAMM_controlled<-lme(SC ~ SC_lag + CAMM_lag + CAMM,
-                       method="ML",
-                       random = ~1|tagid,
-                       data=long_HonorsData %>%
-                               filter(!is.na(SC),
-                                      !is.na(CAMM),
-                                      !is.na(CAMM_lag),
-                                      !is.na(SC_lag)))
  
-stargazer(lin_model_CAMM, lin_model_contempSC_CAMM, type = "html", out="~/Desktop/Research/post-hoc_camm.doc")
+stargazer(null_model_camm, lin_model_CAMM, lin_model_contempSC_CAMM, type = "html", out="~/Desktop/Research/post-hoc_camm.doc")
  
 # 
 # # Compare basic null to contemporaneous measurements model
@@ -778,7 +767,7 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+SC_lag+Transition,
                                 !is.na(Transition),
                                 !is.na(Age_at_Menarche)))
 
-stargazer(lin_model_SC_Transition, lin_SC_Transition_covariates, type = "html", out="~/Desktop/Research/transitions.doc")
+stargazer(null_model_SC_Transition, lin_model_SC_Transition, null_SC_Transition_covariates, lin_SC_Transition_covariates, column.labels = c("Excluding covariates", "Including covariates"), column.separate = c(2, 2), type = "html", out="~/Desktop/Research/transitions.doc")
 
 
 
@@ -899,7 +888,7 @@ lin_SC_Transition_covariates<-lme(SC ~ SES+Age_at_Menarche+Grades+SC_lag+Transit
                                 !is.na(Age_at_Menarche),
                                 !is.na(Grades)))
 
-stargazer(lin_model_SC_CAMM_covariates, lin_SC_Transition_covariates, type = "html", out="~/Desktop/Research/analyses_grades.doc")
+stargazer(null_model_SC_CAMM_covariates, lin_model_SC_CAMM_covariates, null_SC_Transition_covariates, lin_SC_Transition_covariates, column.labels = c("Mindfulness", "School Transitions"), column.separate = c(2, 2),type = "html", out="~/Desktop/Research/analyses_grades.doc")
 
 ### trying to figure out how to run sppa predicting grades 
 
